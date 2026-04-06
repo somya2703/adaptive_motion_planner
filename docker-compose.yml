@@ -1,0 +1,60 @@
+# docker-compose.yml
+# ─────────────────────────────────────────────────────────────
+# Local usage:
+#   docker compose run --rm pipeline          # full pipeline
+#   docker compose run --rm pipeline-quick    # skip benchmarks
+#   docker compose run --rm tests             # tests only
+#   docker compose run --rm benchmark         # benchmarks only
+#
+# Results land in ./results/ on your host machine.
+# ─────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Full pipeline (default) ──────────────────────────────────
+  pipeline:
+    build: .
+    image: adaptive-motion-planner:latest
+    command: python pipeline.py --trials 10
+    volumes:
+      - ./results:/app/results
+    environment:
+      - MPLBACKEND=Agg
+
+  # ── Quick run (skip multi-trial benchmarks) ──────────────────
+  pipeline-quick:
+    build: .
+    image: adaptive-motion-planner:latest
+    command: python pipeline.py --quick
+    volumes:
+      - ./results:/app/results
+    environment:
+      - MPLBACKEND=Agg
+
+  # ── Tests only ───────────────────────────────────────────────
+  tests:
+    build: .
+    image: adaptive-motion-planner:latest
+    command: python -m pytest tests/ -v --tb=short
+    environment:
+      - MPLBACKEND=Agg
+
+  # ── Single scene ─────────────────────────────────────────────
+  scene-free:
+    build: .
+    image: adaptive-motion-planner:latest
+    command: python pipeline.py --quick --scene free_space
+    volumes:
+      - ./results:/app/results
+    environment:
+      - MPLBACKEND=Agg
+
+  # ── Benchmark only ───────────────────────────────────────────
+  benchmark:
+    build: .
+    image: adaptive-motion-planner:latest
+    command: python benchmarks/benchmark.py --all --trials 10 --output /app/results
+    volumes:
+      - ./results:/app/results
+    environment:
+      - MPLBACKEND=Agg

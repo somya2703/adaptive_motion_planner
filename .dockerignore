@@ -1,0 +1,15 @@
+# .dockerignore
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.git/
+.github/
+results/
+*.zip
+*.egg-info/
+dist/
+build/
+.env
+.venv
+venv/

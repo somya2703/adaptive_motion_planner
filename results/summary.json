@@ -1,0 +1,27 @@
+{
+  "tests_passed": true,
+  "test_time_s": 34.7,
+  "plans": {
+    "free_space": {
+      "success": true,
+      "elapsed_ms": 8779.3,
+      "tree_size": 2001,
+      "n_waypoints": 10,
+      "cost": 3.4118
+    },
+    "narrow_corridor": {
+      "success": true,
+      "elapsed_ms": 8398.7,
+      "tree_size": 1877,
+      "n_waypoints": 7,
+      "cost": 3.71
+    },
+    "cluttered": {
+      "success": true,
+      "elapsed_ms": 7257.0,
+      "tree_size": 1637,
+      "n_waypoints": 7,
+      "cost": 3.4134
+    }
+  }
+}
