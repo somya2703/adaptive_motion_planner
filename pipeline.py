@@ -113,21 +113,35 @@ SCENES = {
 
 def run_tests(results_dir: Path) -> dict:
     print("\n" + "="*60)
-    print("  STEP 1 — Unit tests")
+    print("  STEP 1 - Unit tests")
     print("="*60)
-    xml_out = results_dir / "test_report.xml"
+
+    # Always write the JUnit XML to /tmp first (guaranteed writable).
+    # Then copy it to results/ if possible. This avoids PermissionError
+    # when results/ is owned by root from a previous Docker run.
+    xml_tmp = Path("/tmp/test_report.xml")
+    xml_final = results_dir / "test_report.xml"
+
     cmd = [
         "python", "-m", "pytest", "tests/", "-v",
-        "--junitxml=" + str(xml_out),
+        "--junitxml=" + str(xml_tmp),
         "--tb=short",
     ]
     t0 = time.perf_counter()
     proc = subprocess.run(cmd)
     elapsed = time.perf_counter() - t0
     passed = (proc.returncode == 0)
+
+    # Copy XML from /tmp to results/ for GitHub Actions artifact upload
+    if xml_tmp.exists():
+        try:
+            import shutil
+            shutil.copy(str(xml_tmp), str(xml_final))
+        except PermissionError:
+            print("  (could not copy test_report.xml to results/ - check ownership)")
+
     print("\n  Tests %s in %.1fs" % ("PASSED" if passed else "FAILED", elapsed))
     return {"tests_passed": passed, "test_time_s": round(elapsed, 1)}
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Step 2 — Plan
