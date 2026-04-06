@@ -5,8 +5,8 @@ manipulators (Franka Panda). Implements **Informed RRT*** with real-time
 dynamic replanning, **Control Barrier Functions (CBF)** for provable safety
 guarantees, and a **damped least-squares IK** solver with nullspace exploitation.
 
-Built to demonstrate the core competencies for NEURA Robotics AI & Manipulation
-roles: kinematics, constraint handling, path planning, and safety-critical control.
+- Built to demonstrate the core competencies: kinematics, constraint handling, path planning, and safety critical control.
+- Contiously adding comments, notes, documentation so that it can be used for academic references. 
 
 [![CI](https://github.com/somya2703/adaptive_motion_planner/actions/workflows/ci.yml/badge.svg)](https://github.com/somya2703/adaptive_motion_planner/actions)
 
