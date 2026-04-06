@@ -8,7 +8,7 @@ guarantees, and a **damped least-squares IK** solver with nullspace exploitation
 Built to demonstrate the core competencies for NEURA Robotics AI & Manipulation
 roles: kinematics, constraint handling, path planning, and safety-critical control.
 
-[![CI](https://github.com/YOUR_USERNAME/adaptive_motion_planner/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/adaptive_motion_planner/actions)
+[![CI](https://github.com/somya2703/adaptive_motion_planner/actions/workflows/ci.yml/badge.svg)](https://github.com/somya2703/adaptive_motion_planner/actions)
 
 ---
 
