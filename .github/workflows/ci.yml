@@ -1,15 +1,3 @@
-# .github/workflows/ci.yml
-# ─────────────────────────────────────────────────────────────────────────────
-# CI pipeline for Adaptive Motion Planner
-#
-# Runs on every push and pull request to main.
-# Steps:
-#   1. Build Docker image
-#   2. Run test suite  → uploads JUnit XML report
-#   3. Run full pipeline (quick mode)  → uploads result artefacts
-#   4. Publish benchmark chart + RESULTS.md as workflow summary
-# ─────────────────────────────────────────────────────────────────────────────
-
 name: Motion Planner CI
 
 on:
@@ -24,11 +12,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ── 1. Checkout ─────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Set up Docker Buildx (layer caching) ──────────────────────────
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -40,7 +26,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      # ── 3. Build image ───────────────────────────────────────────────────
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
@@ -51,25 +36,33 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to:   type=local,dest=/tmp/.buildx-cache-new,mode=max
 
-      # Rotate cache (prevents unbounded growth)
       - name: Rotate build cache
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-      # ── 4. Run tests ─────────────────────────────────────────────────────
+      # Pre-create results dirs owned by the current (non-root) runner user.
+      # This prevents PermissionError when the non-root container user (uid 1000)
+      # tries to write into a bind-mounted directory owned by root.
+      - name: Pre-create results directories
+        run: mkdir -p results/plans results/trajectories results/cbf
+
       - name: Run unit tests
         run: |
-          mkdir -p results
           docker run --rm \
             -v ${{ github.workspace }}/results:/app/results \
             -e MPLBACKEND=Agg \
             adaptive-motion-planner:ci \
             python -m pytest tests/ -v \
-              --junitxml=/app/results/test_report.xml \
+              --junitxml=/tmp/test_report.xml \
               --tb=short
+          # Copy XML out of the container via a second run
+          docker run --rm \
+            -v ${{ github.workspace }}/results:/app/results \
+            -e MPLBACKEND=Agg \
+            adaptive-motion-planner:ci \
+            sh -c "cp /tmp/test_report.xml /app/results/test_report.xml 2>/dev/null || true"
 
-      # ── 5. Publish test results ──────────────────────────────────────────
       - name: Publish test report
         uses: mikepenz/action-junit-report@v4
         if: always()
@@ -77,7 +70,6 @@ jobs:
           report_paths: results/test_report.xml
           check_name: Unit test results
 
-      # ── 6. Run full pipeline (quick — skips multi-trial benchmarks) ──────
       - name: Run pipeline (quick mode)
         run: |
           docker run --rm \
@@ -86,7 +78,6 @@ jobs:
             adaptive-motion-planner:ci \
             python pipeline.py --quick --trials 5
 
-      # ── 7. Upload result artefacts ───────────────────────────────────────
       - name: Upload pipeline results
         uses: actions/upload-artifact@v4
         if: always()
@@ -95,23 +86,18 @@ jobs:
           path: results/
           retention-days: 30
 
-      # ── 8. Write job summary ─────────────────────────────────────────────
       - name: Write job summary
         if: always()
         run: |
-          echo "## Adaptive Motion Planner — CI results" >> $GITHUB_STEP_SUMMARY
+          echo "## Adaptive Motion Planner - CI results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f results/RESULTS.md ]; then
             cat results/RESULTS.md >> $GITHUB_STEP_SUMMARY
-          else
-            echo "Pipeline ran in quick mode — see artefacts for details." \
-              >> $GITHUB_STEP_SUMMARY
           fi
 
-      # ── 9. Benchmark (full, only on push to main) ────────────────────────
-      - name: Run full benchmark suite
+      - name: Run full benchmark (main branch only)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           docker run --rm \
@@ -122,7 +108,7 @@ jobs:
               --all --trials 10 \
               --output /app/results
 
-      - name: Upload full benchmark results
+      - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
