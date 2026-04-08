@@ -48,14 +48,25 @@ RESULTS = Path("/app/results")
 # ─────────────────────────────────────────────────────────────────────────────
 
 def make_dir(p: Path) -> Path:
-    """Create directory, tolerating pre-existing host-owned dirs."""
+    """Create dir and ensure it is writable by the current process."""
     try:
         p.mkdir(parents=True, exist_ok=True)
     except PermissionError:
         if not p.is_dir():
-            print(f"ERROR: cannot create {p}")
-            print("Run on host first:  mkdir -p results/plans results/trajectories results/cbf")
+            print("ERROR: cannot create " + str(p))
+            print("Run on host: sudo rm -rf results/ && mkdir -p results/plans results/trajectories results/cbf")
             sys.exit(1)
+    # Make every existing file in this dir writable so we can overwrite
+    # stale root-owned output files from a previous Docker run.
+    try:
+        import stat
+        for f in p.iterdir():
+            try:
+                f.chmod(f.stat().st_mode | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
+            except PermissionError:
+                pass  # cannot chmod files owned by another user — handled below
+    except PermissionError:
+        pass
     return p
 
 
