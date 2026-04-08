@@ -41,9 +41,6 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-      # Pre-create results dirs owned by the current (non-root) runner user.
-      # This prevents PermissionError when the non-root container user (uid 1000)
-      # tries to write into a bind-mounted directory owned by root.
       - name: Pre-create results directories
         run: mkdir -p results/plans results/trajectories results/cbf
 
@@ -52,11 +49,11 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}/results:/app/results \
             -e MPLBACKEND=Agg \
+            -e PYTHONPATH=/app \
             adaptive-motion-planner:ci \
             python -m pytest tests/ -v \
               --junitxml=/tmp/test_report.xml \
               --tb=short
-          # Copy XML out of the container via a second run
           docker run --rm \
             -v ${{ github.workspace }}/results:/app/results \
             -e MPLBACKEND=Agg \
@@ -75,6 +72,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}/results:/app/results \
             -e MPLBACKEND=Agg \
+            -e PYTHONPATH=/app \
             adaptive-motion-planner:ci \
             python pipeline.py --quick --trials 5
 
@@ -103,6 +101,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}/results:/app/results \
             -e MPLBACKEND=Agg \
+            -e PYTHONPATH=/app \
             adaptive-motion-planner:ci \
             python benchmarks/benchmark.py \
               --all --trials 10 \

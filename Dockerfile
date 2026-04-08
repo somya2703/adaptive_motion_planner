@@ -18,6 +18,7 @@ FROM python:3.11-slim AS runtime
 
 ENV MPLBACKEND=Agg \
     PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH=/app \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
