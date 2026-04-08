@@ -104,7 +104,7 @@ jobs:
             -e PYTHONPATH=/app \
             adaptive-motion-planner:ci \
             python benchmarks/benchmark.py \
-              --all --trials 10 \
+              --scenario all --trials 10 \
               --output /app/results
 
       - name: Upload benchmark results
