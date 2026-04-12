@@ -1,27 +1,11 @@
-"""
-
-Forward kinematics for the Panda using Modified DH parameters.
-
-Each joint i has parameters (a_{i-1}, d_i, alpha_{i-1}, theta_i).
-The homogeneous transform from frame i-1 to frame i is:
-
-    T_{i-1}^{i} = Rx(alpha_{i-1}) · Tx(a_{i-1}) · Rz(theta_i) · Tz(d_i)
-
-We compute:
-  - All link frames in the base frame  (used by Jacobian, collision spheres)
-  - The TCP pose as an SE(3) matrix
-"""
-
 import numpy as np
 from robot.panda import PANDA, JointSpec
 
 
 def _dh_transform(a: float, d: float, alpha: float, theta: float) -> np.ndarray:
     """
-    Single-joint Modified DH homogeneous transform (4x4).
-
-    Parameters
-    ----------
+    for ref
+    
     a     : link length      (metres)
     d     : link offset      (metres)
     alpha : link twist       (radians)
@@ -40,15 +24,9 @@ def _dh_transform(a: float, d: float, alpha: float, theta: float) -> np.ndarray:
 def forward_kinematics(q: np.ndarray) -> tuple[np.ndarray, list[np.ndarray]]:
     """
     Compute FK for the Panda at joint configuration q.
-
-    Parameters
-    ----------
-    q : (7,) joint angles in radians
-
-    Returns
-    -------
-    T_tcp : (4, 4) SE(3) transform — TCP in base frame
-    T_all : list of 7 (4, 4) transforms — each joint frame in base frame
+    Returns:
+    T_tcp : (4, 4) SE(3) transform, TCP in base frame
+    T_all : list of 7 (4, 4) transforms, each joint frame in base frame
     """
     assert q.shape == (7,), f"Expected (7,) config, got {q.shape}"
 
