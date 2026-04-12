@@ -1,10 +1,4 @@
 """
-benchmarks/benchmark.py
------------------------
-Standard benchmark suite for the Adaptive Motion Planner.
-
-Usage
------
     python benchmarks/benchmark.py --scenario all --trials 20 --output results/
     python benchmarks/benchmark.py --scenario narrow_corridor --trials 50
 """
@@ -23,9 +17,8 @@ from planner.rrt_star import InformedRRTStar, _cartesian_collision_check
 from robot.panda import PANDA
 
 
-# ---------------------------------------------------------------------------
+
 # Standard obstacle layouts
-# ---------------------------------------------------------------------------
 
 def _free_space_obstacles() -> List[Obstacle]:
     return []
@@ -86,9 +79,8 @@ def _goal_pairs(
     return pairs
 
 
-# ---------------------------------------------------------------------------
+
 # Single scenario runner
-# ---------------------------------------------------------------------------
 
 def run_scenario(
     name: str,
@@ -153,9 +145,8 @@ def run_scenario(
     return stats
 
 
-# ---------------------------------------------------------------------------
+
 # CLI entry point
-# ---------------------------------------------------------------------------
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Motion planner benchmark suite")
