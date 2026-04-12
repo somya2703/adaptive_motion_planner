@@ -1,8 +1,8 @@
 # Adaptive Motion Planner
 
-A collision-aware, constraint-respecting motion planner for the Franka Panda 7-DoF robotic arm.
+A collision aware, constraint respecting motion planner for the Franka Panda 7-DoF robotic arm.
 Implements Informed RRT* path planning, damped least-squares inverse kinematics with nullspace
-redundancy resolution, and Control Barrier Function safety guarantees — fully containerised
+redundancy resolution, and Control Barrier Function safety guarantees.Fully containerised
 with Docker and a GitHub Actions CI pipeline that regenerates all results automatically on every push.
 
 [![CI](https://github.com/somya2703/adaptive_motion_planner/actions/workflows/ci.yml/badge.svg)](https://github.com/somya2703/adaptive_motion_planner/actions/workflows/ci.yml)
