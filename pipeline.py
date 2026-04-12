@@ -1,19 +1,4 @@
 """
-pipeline.py
------------
-End-to-end pipeline for the Adaptive Motion Planner.
-
-Runs inside Docker. Produces artifacts in /app/results/:
-
-  results/
-  ├── summary.json
-  ├── test_report.xml       JUnit XML (GitHub Actions reads this)
-  ├── benchmarks.json
-  ├── benchmarks.png
-  ├── plans/                3D TCP trace per scene
-  ├── trajectories/         Joint pos/vel/accel per scene
-  └── cbf/                  CBF clearance h(q) per scene
-
 Usage:
     python pipeline.py                 # full pipeline
     python pipeline.py --quick         # skip multi-trial benchmarks
@@ -43,9 +28,8 @@ from kinematics.forward import tcp_position, link_positions
 RESULTS = Path("/app/results")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # Helpers
-# ─────────────────────────────────────────────────────────────────────────────
 
 def make_dir(p: Path) -> Path:
     """Create dir and ensure it is writable by the current process."""
@@ -56,15 +40,14 @@ def make_dir(p: Path) -> Path:
             print("ERROR: cannot create " + str(p))
             print("Run on host: sudo rm -rf results/ && mkdir -p results/plans results/trajectories results/cbf")
             sys.exit(1)
-    # Make every existing file in this dir writable so we can overwrite
-    # stale root-owned output files from a previous Docker run.
+
     try:
         import stat
         for f in p.iterdir():
             try:
                 f.chmod(f.stat().st_mode | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
             except PermissionError:
-                pass  # cannot chmod files owned by another user — handled below
+                pass 
     except PermissionError:
         pass
     return p
@@ -84,9 +67,9 @@ STYLE = {
 }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # Scene definitions
-# ─────────────────────────────────────────────────────────────────────────────
+
 
 Q_START = np.array([0.0, -np.pi/4, 0.0, -3*np.pi/4, 0.0, np.pi/2, np.pi/4])
 Q_GOAL  = np.array([0.749, 0.05, -0.018, -2.329, -2.829, 0.708, 1.113])
@@ -118,18 +101,16 @@ SCENES = {
 }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # Step 1 — pytest
-# ─────────────────────────────────────────────────────────────────────────────
+
 
 def run_tests(results_dir: Path) -> dict:
     print("\n" + "="*60)
     print("  STEP 1 - Unit tests")
     print("="*60)
 
-    # Always write the JUnit XML to /tmp first (guaranteed writable).
-    # Then copy it to results/ if possible. This avoids PermissionError
-    # when results/ is owned by root from a previous Docker run.
+
     xml_tmp = Path("/tmp/test_report.xml")
     xml_final = results_dir / "test_report.xml"
 
@@ -143,7 +124,7 @@ def run_tests(results_dir: Path) -> dict:
     elapsed = time.perf_counter() - t0
     passed = (proc.returncode == 0)
 
-    # Copy XML from /tmp to results/ for GitHub Actions artifact upload
+    
     if xml_tmp.exists():
         try:
             import shutil
@@ -154,9 +135,9 @@ def run_tests(results_dir: Path) -> dict:
     print("\n  Tests %s in %.1fs" % ("PASSED" if passed else "FAILED", elapsed))
     return {"tests_passed": passed, "test_time_s": round(elapsed, 1)}
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # Step 2 — Plan
-# ─────────────────────────────────────────────────────────────────────────────
+
 
 def plan_scene(name: str, scene: dict, max_iter: int = 2000, seed: int = 42):
     constraints = ConstraintSet()
@@ -173,9 +154,8 @@ def plan_scene(name: str, scene: dict, max_iter: int = 2000, seed: int = 42):
     return result, traj, elapsed_ms
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # Step 3 — Plots
-# ─────────────────────────────────────────────────────────────────────────────
 
 def plot_path_3d(name: str, scene: dict, result, out_dir: Path):
     with plt.rc_context(STYLE):
@@ -286,9 +266,8 @@ def plot_cbf_clearance(name: str, scene: dict, result, traj, cbf_dir: Path):
         print("  Saved " + path.name)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # Step 4 — Benchmarks
-# ─────────────────────────────────────────────────────────────────────────────
 
 def run_benchmarks(results_dir: Path, n_trials: int = 8) -> list:
     print("\n" + "="*60)
@@ -374,9 +353,8 @@ def plot_benchmarks(stats: list, results_dir: Path):
         print("  Saved " + path.name)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # Step 5 — RESULTS.md
-# ─────────────────────────────────────────────────────────────────────────────
 
 def write_results_md(summary: dict, stats: list, results_dir: Path):
     ts = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
@@ -436,9 +414,8 @@ def write_results_md(summary: dict, stats: list, results_dir: Path):
     print("  Saved " + md_path.name)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Main
-# ─────────────────────────────────────────────────────────────────────────────
+
+
 
 def main():
     parser = argparse.ArgumentParser()
