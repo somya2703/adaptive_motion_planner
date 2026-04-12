@@ -1,12 +1,11 @@
-# configs/planner.yaml
-# All hyperparameters for the Adaptive Motion Planner
+# All hyperparameters 
 
 planner:
   max_iter: 5000          # RRT* iteration budget
   step_size: 0.30         # max extension step (rad, joint-space L2)
   goal_radius: 0.15       # convergence ball radius (rad)
   k_neighbours: 10        # rewiring neighbourhood size
-  goal_bias: 0.10         # fraction of goal-directed samples
+  goal_bias: 0.10         # fraction of goal directed samples
 
 trajectory:
   smooth_n: 200           # B-spline resampling points
