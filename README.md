@@ -283,6 +283,7 @@ results/
     ├── narrow_corridor_cbf.png    h(q) > 0 throughout 
     └── cluttered_cbf.png
 ```
+See [sample_results/RESULTS.md](sample_results/RESULTS.md)
 
 ### Configuration
 
