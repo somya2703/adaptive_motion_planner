@@ -1,8 +1,6 @@
 # Mathematical Foundations
 
-This document derives the key equations implemented in the planner.
-Think of it as the "paper behind the code" — recruiters and reviewers
-who open this will immediately see rigorous thinking.
+*This document derives the key equations implemented in the planner.*
 
 ---
 
@@ -18,7 +16,7 @@ T_{i-1}^{i} = Rx(α_{i-1}) · Tx(a_{i-1}) · Rz(θ_i) · Tz(d_i)
          ⎡ cθᵢ   -sθᵢ    0     aᵢ₋₁  ⎤
        = ⎢ sθᵢcα  cθᵢcα  -sα  -sα·dᵢ ⎥
          ⎢ sθᵢsα  cθᵢsα   cα   cα·dᵢ ⎥
-         ⎣  0      0       0     1    ⎦
+         ⎣  0      0       0     1   ⎦
 ```
 
 where `cθ = cos(θ)`, `sθ = sin(θ)`, `cα = cos(α)`, `sα = sin(α)`.
@@ -43,7 +41,7 @@ For a revolute joint `i`, the column of the geometric Jacobian is:
 
 ```
 Jᵢ = ⎡ zᵢ₋₁ × (p_tcp − pᵢ₋₁) ⎤   (linear velocity)
-     ⎣         zᵢ₋₁             ⎦   (angular velocity)
+     ⎣         zᵢ₋₁          ⎦   (angular velocity)
 ```
 
 where:
@@ -113,8 +111,8 @@ The general IK velocity solution is:
 q̇ = J†_λ · ẋ_e + (I − J†_λ J) · q̇_0
 ```
 
-- First term: **task-space component** — achieves the desired TCP motion
-- Second term: **nullspace component** — moves joints without moving TCP
+- **First term** (task-space component): achieves the desired TCP motion
+- **Second term:** (nullspace component): moves joints without moving TCP
 
 We choose `q̇_0 = k · ∇H(q)` where `H` is the joint-midpoint cost:
 
@@ -136,7 +134,7 @@ toward their midpoints, maximising manipulability and avoiding limits.
 RRT* guarantees **asymptotic optimality**: as `n → ∞`, the cost of the
 returned path converges to the optimal cost almost surely.
 
-Key addition over RRT: **rewiring** — after inserting a new node `x_new`,
+Key addition over RRT: **rewiring:** after inserting a new node `x_new`,
 check all nodes `x_near` in a ball of radius `r_n`:
 
 ```
@@ -159,7 +157,7 @@ X_f = { x ∈ X | g*(x_start, x) + g*(x, x_goal) < c_best }
 ```
 
 where `g*` is the true optimal cost-to-go. Using the Euclidean lower
-bound (straight-line distance), this becomes a **prolate hyperspheroid**:
+bound i.e straightline distance, this becomes a **prolate hyperspheroid**:
 
 ```
 X_ell = { x | dist(x, x_start) + dist(x, x_goal) < c_best }
@@ -167,7 +165,7 @@ X_ell = { x | dist(x, x_start) + dist(x, x_goal) < c_best }
 
 The hyperspheroid has:
 - Centre: `x_c = (x_start + x_goal) / 2`
-- Major semi-axis: `a₁ = c_best / 2`  (along the start-goal axis)
+- Major semi-axis: `a₁ = c_best / 2`  (along the start to goal axis)
 - Minor semi-axes: `aᵢ = √(c_best² − c_min²) / 2`  (i ≥ 2)
 
 Sampling uniformly in this ellipsoid, then applying rotation matrix `C`
@@ -195,7 +193,7 @@ A **Control Barrier Function** `h: X → R` defines a safe set:
 S = { x ∈ X | h(x) ≥ 0 }
 ```
 
-`S` is **forward-invariant** (once in, stays in) if:
+`S` is **forward invariant** (once in, stays in) if:
 
 ```
 ḣ(x, u) + α(h(x)) ≥ 0    ∀ x ∈ S, u ∈ U
@@ -245,21 +243,21 @@ s.t.  ∀ obstacle i:    L_g h_i · τ + L_f h_i + αᵢ · hᵢ ≥ 0
       τ_min ≤ τ ≤ τ_max
 ```
 
-This is a Quadratic Program. For real-time use (1 kHz), we implement
-a gradient-projection approximation that handles each constraint
+This is a Quadratic Program. For real time use (1 kHz), we implement
+a gradient projection approximation that handles each constraint
 independently, which is sub-optimal but runs in microseconds.
 
 **Safety guarantee**: The CBF condition is a sufficient condition for
 set invariance. If `h(x₀) ≥ 0` at time 0 and the QP is feasible at
-every timestep, then `h(x(t)) ≥ 0` for all `t ≥ 0` — the arm can
-never collide with the obstacle.
+every timestep, then `h(x(t)) ≥ 0` for all `t ≥ 0` .
+The arm can never collide with the obstacle.
 
 ---
 
 ## 7. B-Spline Trajectory Smoothing
 
 Raw RRT* paths are piecewise-linear in joint space, producing
-discontinuous velocity commands. We smooth with a **cubic B-spline**:
+discontinuous velocity commands. We can make it smooth with a **cubic B-spline**:
 
 ```
 p(u) = Σᵢ Nᵢ,₃(u) · pᵢ     u ∈ [0, 1]
@@ -270,7 +268,7 @@ Using `scipy.interpolate.splprep` with `s = 0` (interpolation mode).
 
 ### Time Scaling — Trapezoidal Profile
 
-Given a smooth path `q(s)` parametrised by arc-length `s ∈ [0, L]`,
+Given a smooth path `q(s)` parametrised by arc length `s ∈ [0, L]`,
 we assign time via a trapezoidal velocity profile:
 
 ```
@@ -281,7 +279,7 @@ Phase 3 (decelerate): q̈ = −a_max,  T − t_a ≤ t ≤ T
 
 The accel duration `t_a = v_peak / a_max` and total time `T` are
 chosen so that no joint exceeds its velocity or acceleration limit.
-The most-constrained joint determines the global time scale.
+The most constrained joint determines the global time scale.
 
 ---
 
