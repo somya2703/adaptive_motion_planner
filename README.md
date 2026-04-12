@@ -67,11 +67,66 @@ This project solves that problem end-to-end:
 
 ---
 
+## Repository structure
+
+```
+adaptive_motion_planner/
+│
+├── robot/
+│   └── panda.py               Franka Panda DH parameters, joint / torque
+│                              limits, self-collision sphere geometry.
+│
+├── kinematics/
+│   ├── forward.py             SE(3) FK via Modified DH, all link frames
+│   ├── jacobian.py            6x7 geometric Jacobian, damped pseudoinverse,
+│   │                          nullspace projector P = I - J_pinv J
+│   └── ik.py                  Iterative damped LS IK with nullspace
+│                              joint-midpoint gradient descent.
+│
+├── safety/
+│   ├── constraints.py         JointLimitConstraint, TorqueLimitConstraint,
+│   │                          SelfCollisionConstraint, ConstraintSet.
+│   └── cbf.py                 CBF safety filter — barrier functions for.
+│                              obstacles and joint limits, gradient-projection QP
+│
+├── planner/
+│   ├── rrt_star.py            Informed RRT* with ellipsoidal sampling and
+│   │                          k-nearest rewiring.
+│   ├── dynamic_replanner.py   Obstacle tracker and triggered replanning.
+│   └── trajectory.py          B-spline smoothing and trapezoidal time scaling.
+│
+├── benchmarks/
+│   └── benchmark.py           Free-space / narrow-corridor / cluttered suite
+│
+├── tests/
+│   ├── test_kinematics.py     FK, Jacobian, IK — 15 tests
+│   └── test_planner.py        Constraints, CBF, planner, trajectory — 23 tests
+│
+├── docs/
+│   ├── math.md                Full derivations of every algorithm
+│   └── images/                Result images rendered in this README
+│
+├── configs/
+│   └── planner.yaml           All hyperparameters
+│
+├── pipeline.py                End-to-end orchestrator: tests, plan, plot, benchmarking.
+├── plan.py                    Single query CLI with optional visualisation.
+├── visualize.py               Matplotlib 3D arm, TCP trace, obstacle spheres.
+│
+├── Dockerfile                 Multi-stage build, non-root planner user
+├── entrypoint.sh              Fixes results/ ownership, drops to planner user
+├── docker-compose.yml         Named services for every use case
+└── .github/workflows/ci.yml   Build, test, pipeline, benchmark on every push
+```
+
+---
+
+
 ## Theoretical concepts
 
 ### Forward kinematics and SE(3)
 
-A robot pose lives in SE(3), the Special Euclidean group — a 4x4 homogeneous matrix
+A robot pose lives in SE(3). **The Special Euclidean group:** a 4x4 homogeneous matrix
 combining a 3x3 rotation matrix R and a 3x1 translation vector p:
 
 ```
@@ -104,20 +159,20 @@ q_dot = J_pinv * x_dot_e  +  (I - J_pinv * J) * grad_H(q)
 ```
 
 The first term achieves the desired TCP motion. The second moves joints in the nullspace
-to minimise a cost H(q) — here, distance of each joint from its midpoint. The damped
-pseudoinverse J_pinv = J^T (J J^T + lambda^2 I)^{-1} avoids singularity blow-up, with
+to minimise a cost H(q) *(distance of each joint from its midpoint)*. The damped
+pseudoinverse J_pinv = J^T (J J^T + lambda^2 I)^{-1} avoids singularity blow up, with
 lambda set adaptively from the Yoshikawa manipulability measure w(q) = sqrt(det(J J^T)).
 
 ### RRT* and asymptotic optimality
 
 RRT* adds a rewiring step to RRT: after inserting a new node, it checks whether routing
 any nearby node through the new node reduces that node's cost. This makes the algorithm
-asymptotically optimal — as samples n tends to infinity, the returned path converges to
+asymptotically optimal as samples n tends to infinity, the returned path converges to
 the global optimum almost surely.
 
 ### Informed RRT* — ellipsoidal sampling
 
-Informed RRT* restricts sampling to the prolate hyperspheroid — the set of all points x
+Informed RRT* restricts sampling to the prolate hyperspheroid which the set of all points x
 where any path through x cannot improve the current best solution c_best:
 
 ```
@@ -130,7 +185,7 @@ shrinks. In 7D joint space this can reduce the effective search volume by over 9
 
 ### Control Barrier Functions
 
-A CBF h(q) >= 0 defines a safe set S. The CBF condition makes S forward-invariant:
+A CBF h(q) >= 0 defines a safe set S. The CBF condition makes S forward invariant:
 
 ```
 dh/dt + alpha * h(q) >= 0
@@ -143,12 +198,12 @@ obstacle and joint limit simultaneously. For a spherical obstacle at p_obs:
 h_obs(q) = ||p_tcp(q) - p_obs||^2 - r_eff^2
 ```
 
-This is positive outside the obstacle and negative inside — making h_obs(q) >= 0 a hard
+This is positive outside the obstacle and negative inside which makes h_obs(q) >= 0 a hard
 safety guarantee with a formal proof of forward invariance.
 
 ### B-spline smoothing and time scaling
 
-Raw RRT* paths are piecewise-linear (C0). A cubic B-spline gives C2 continuity —
+Raw RRT* paths are piecewise linear (C0). A cubic B-spline gives C2 continuity i.e
 continuous position, velocity, and acceleration. A trapezoidal velocity profile then
 assigns time so no joint exceeds its velocity or acceleration limit.
 
@@ -172,7 +227,7 @@ mkdir -p results/plans results/trajectories results/cbf
 # Full pipeline — tests, 3 scenes, benchmarks
 docker run --rm -v $(pwd)/results:/app/results amp
 
-# Quick run — skip multi-trial benchmarks (~3 min total)
+# Quick run — skip multi trial benchmarks (~3 min total)
 docker run --rm -v $(pwd)/results:/app/results amp python pipeline.py --quick
 
 # Tests only
@@ -225,7 +280,7 @@ results/
 │   ├── narrow_corridor_traj.png
 │   └── cluttered_traj.png
 └── cbf/
-    ├── narrow_corridor_cbf.png    h(q) > 0 throughout — provably safe
+    ├── narrow_corridor_cbf.png    h(q) > 0 throughout 
     └── cluttered_cbf.png
 ```
 
@@ -248,65 +303,12 @@ cbf:
 
 ---
 
-## Repository structure
-
-```
-adaptive_motion_planner/
-│
-├── robot/
-│   └── panda.py               Franka Panda DH parameters, joint / torque
-│                              limits, self-collision sphere geometry
-│
-├── kinematics/
-│   ├── forward.py             SE(3) FK via Modified DH, all link frames
-│   ├── jacobian.py            6x7 geometric Jacobian, damped pseudoinverse,
-│   │                          nullspace projector P = I - J_pinv J
-│   └── ik.py                  Iterative damped LS IK with nullspace
-│                              joint-midpoint gradient descent
-│
-├── safety/
-│   ├── constraints.py         JointLimitConstraint, TorqueLimitConstraint,
-│   │                          SelfCollisionConstraint, ConstraintSet
-│   └── cbf.py                 CBF safety filter — barrier functions for
-│                              obstacles and joint limits, gradient-projection QP
-│
-├── planner/
-│   ├── rrt_star.py            Informed RRT* with ellipsoidal sampling and
-│   │                          k-nearest rewiring
-│   ├── dynamic_replanner.py   Obstacle tracker and triggered replanning
-│   └── trajectory.py          B-spline smoothing and trapezoidal time scaling
-│
-├── benchmarks/
-│   └── benchmark.py           Free-space / narrow-corridor / cluttered suite
-│
-├── tests/
-│   ├── test_kinematics.py     FK, Jacobian, IK — 15 tests
-│   └── test_planner.py        Constraints, CBF, planner, trajectory — 23 tests
-│
-├── docs/
-│   ├── math.md                Full derivations of every algorithm
-│   └── images/                Result images rendered in this README
-│
-├── configs/
-│   └── planner.yaml           All hyperparameters
-│
-├── pipeline.py                End-to-end orchestrator: tests, plan, plot, bench
-├── plan.py                    Single query CLI with optional visualisation
-├── visualize.py               Matplotlib 3D arm, TCP trace, obstacle spheres
-│
-├── Dockerfile                 Multi-stage build, non-root planner user
-├── entrypoint.sh              Fixes results/ ownership, drops to planner user
-├── docker-compose.yml         Named services for every use case
-└── .github/workflows/ci.yml   Build, test, pipeline, benchmark on every push
-```
-
----
 
 ## Mathematical derivations
 
-Full derivations — Modified DH transforms, Jacobian column proof, CBF forward invariance,
+All the derivations Modified DH transforms, Jacobian column proof, CBF forward invariance,
 Informed RRT* ellipsoid construction, nullspace redundancy resolution, trapezoidal time
-scaling — are in [`docs/math.md`](docs/math.md).
+scaling are in [`docs/math.md`](docs/math.md).
 
 ---
 
