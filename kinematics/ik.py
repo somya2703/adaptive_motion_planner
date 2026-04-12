@@ -1,5 +1,5 @@
 """
-Inverse kinematics for the Panda — damped least-squares with nullspace.
+Used damped least-squares with nullspace.
 
 Given a desired TCP pose T_des (position + rotation), find joint angles q
 such that FK(q) ≈ T_des, while:
@@ -70,7 +70,7 @@ def _adaptive_damping(manip: float, manip_threshold: float = 0.04) -> float:
 
 def _nullspace_gradient(q: np.ndarray, k: float = 0.5) -> np.ndarray:
     """
-    Gradient of the joint-midpoint cost function:
+    Gradient of the joint midpoint cost function:
         H(q) = 0.5 * sum((q_i - q_mid_i) / (q_max_i - q_min_i))^2
 
     The nullspace step will pull joints toward their midpoints,
