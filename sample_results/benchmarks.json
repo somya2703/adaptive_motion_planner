@@ -1,0 +1,26 @@
+[
+  {
+    "scene": "free_space",
+    "label": "Free space",
+    "success_rate": 100.0,
+    "time_mean_ms": 8814.0,
+    "time_std_ms": 19.0,
+    "path_len_mean": 3.3767
+  },
+  {
+    "scene": "narrow_corridor",
+    "label": "Narrow corridor",
+    "success_rate": 100.0,
+    "time_mean_ms": 8838.0,
+    "time_std_ms": 244.0,
+    "path_len_mean": 3.3822
+  },
+  {
+    "scene": "cluttered",
+    "label": "Cluttered (4 obs.)",
+    "success_rate": 100.0,
+    "time_mean_ms": 7257.0,
+    "time_std_ms": 710.0,
+    "path_len_mean": 3.5746
+  }
+]
